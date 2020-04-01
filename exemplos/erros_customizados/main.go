@@ -13,7 +13,7 @@ import (
 type StringVaziaError string
 
 func (s StringVaziaError) Error() string {
-	return "A string está vázia."
+	return "A string está vazia."
 }
 
 type StringNumericaError string
@@ -46,7 +46,7 @@ func BemVindoCustom(nome string) (string, error) {
 	return "Bem Vindo ao meetup da comunidade Golang CWB, " + nome + ".", nil
 }
 
-// DigaBemVindo imprime uma mensagem de bem vindo para um participante do meetup.
+// DigaBemVindoCustom imprime uma mensagem de bem vindo para um participante do meetup.
 func DigaBemVindoCustom(w io.Writer, nome string) {
 	msgBoasVindas, err := BemVindoCustom(nome)
 	if err != nil {

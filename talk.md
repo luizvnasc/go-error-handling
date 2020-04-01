@@ -45,17 +45,14 @@ func New(text string) error {
 Isso acaba se tornando uma dor de cabeça para quem está começando em go pois ao tentar realizar a comparação abaixo o resultado não é bem o esperado.
 
 ```golang
-func comparaErros(erro1,erro2 error) bool {
-    return erro1 == erro2
-}
 
 func main() {
 erro1 := errors.New("Isto é um erro")
 erro2 := errors.New("Isto é um erro")
-fmt.Println(comparaErros(erro1,erro2)) //false
+fmt.Println(erro1 == erro2) //false
 }
 ```
-* https://play.golang.org/p/rFt8xI9Dd3O
+* https://play.golang.org/p/fqPUo8Rgglv3O
 
 ### Sentinelas
 
@@ -85,6 +82,48 @@ func main() {
 }
 ````
 * https://play.golang.org/p/Rt16cZiSJjD
+
+### Tipos de erros Customizados
+
+```golang
+type StringVaziaError string
+
+func (s StringVaziaError) Error() string {
+	return "A string está vazia."
+}
+
+type StringNumericaError string
+
+func (s StringNumericaError) Error() string {
+	return "A string está " + string(s) + "contém apenas números."
+}
+
+type StringComCaracteresEspeciaisError string
+
+func (s StringComCaracteresEspeciaisError) Error() string {
+	return "A string está " + string(s) + "contém apenas números."
+}
+```
+
+Além de mensagens customizadas é possível tratar os erros a partir do seu tipo:
+
+```golang
+// DigaBemVindoCustom imprime uma mensagem de bem vindo para um participante do meetup.
+func DigaBemVindoCustom(w io.Writer, nome string) {
+	msgBoasVindas, err := BemVindoCustom(nome)
+	if err != nil {
+		switch err.(type) {
+		case StringVaziaError:
+			fmt.Fprintln(w, "Não aceitamos pessoas anônimas!")
+		case StringNumericaError:
+			fmt.Fprintln(w, "Te entendo, somos todos apenas números.")
+		case StringComCaracteresEspeciaisError:
+			fmt.Fprintln(w, "Você ainda usa hotmail?")
+		}
+	}
+	fmt.Fprintln(w, msgBoasVindas)
+}
+```
 
 ### fontes
 * [Error handling and Go - The go blog](https://blog.golang.org/error-handling-and-go)
