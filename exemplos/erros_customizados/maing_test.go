@@ -1,6 +1,8 @@
 package main
 
-import "testing"
+import (
+	"testing"
+)
 
 func TestOla(t *testing.T) {
 	t.Run("Passando uma string numérica como parâmetro", func(t *testing.T) {
@@ -48,4 +50,29 @@ func TestOla(t *testing.T) {
 			t.Error("Erro ao criar mensagem de boas vindas: Esperado uma mensagem, obitido nil")
 		}
 	})
+}
+
+func BenchmarkDigaBemVindoCustom(b *testing.B) {
+	nomes := []string{"1", "John Doe", "Golang@CWB", ""}
+	for i := 0; i < b.N; i++ {
+		nome := nomes[i%len(nomes)]
+		DigaBemVindoCustom(&spyWriter{}, nome)
+	}
+}
+
+func BenchmarkDigaBemVindo(b *testing.B) {
+	nomes := []string{"1", "John Doe", "Golang@CWB", ""}
+	for i := 0; i < b.N; i++ {
+		nome := nomes[i%len(nomes)]
+		DigaBemVindo(&spyWriter{}, nome)
+	}
+}
+
+type spyWriter struct {
+	counter int
+}
+
+func (spy *spyWriter) Write(p []byte) (n int, err error) {
+	spy.counter++
+	return spy.counter, nil
 }

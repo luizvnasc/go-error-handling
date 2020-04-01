@@ -1,7 +1,9 @@
 package main
 
 import (
+	"errors"
 	"flag"
+	"fmt"
 	"io"
 	"os"
 	"strconv"
@@ -27,7 +29,7 @@ func (s StringComCaracteresEspeciaisError) Error() string {
 }
 
 // BemVindo constrói uma menssagem de boas vindas desejada para um nome passado por parâmetro.
-func BemVindo(nome string) (string, error) {
+func BemVindoCustom(nome string) (string, error) {
 	// verifica se a string é vazia
 	if s := strings.Trim(nome, " "); len(s) == 0 {
 		return "", StringVaziaError(nome)
@@ -45,54 +47,54 @@ func BemVindo(nome string) (string, error) {
 }
 
 // DigaBemVindo imprime uma mensagem de bem vindo para um participante do meetup.
-func DigaBemVindo(w io.Writer, nome string) {
-	msgBoasVindas, err := BemVindo(nome)
+func DigaBemVindoCustom(w io.Writer, nome string) {
+	msgBoasVindas, err := BemVindoCustom(nome)
 	if err != nil {
 		switch err.(type) {
 		case StringVaziaError:
-			println("Não aceitamos pessoas anônimas!")
+			fmt.Fprintln(w, "Não aceitamos pessoas anônimas!")
 		case StringNumericaError:
-			println("Te entendo, somos todos apenas números.")
+			fmt.Fprintln(w, "Te entendo, somos todos apenas números.")
 		case StringComCaracteresEspeciaisError:
-			println("Você ainda usa hotmail?")
+			fmt.Fprintln(w, "Você ainda usa hotmail?")
 		}
 	}
-	println(msgBoasVindas)
+	fmt.Fprintln(w, msgBoasVindas)
 }
 
-// // BemVindo constrói uma menssagem de boas vindas desejada para um nome passado por parâmetro.
-// func BemVindo(nome string) (string, error) {
-// 	// verifica se a string é vazia
-// 	if s := strings.Trim(nome, " "); len(s) == 0 {
-// 		return "", errors.New("O nome informado está vazio")
-// 	}
-// 	// verifica se a string possui apenas números
-// 	if _, err := strconv.ParseFloat(nome, 64); err == nil {
-// 		return "", errors.New("O nome informado é um número")
-// 	}
-// 	// verifica se a string possui caracteres especiais
-// 	if strings.ContainsAny(nome, `,.|!@#$%&*+_-=[]{};:/?\\'"()`) {
-// 		return "", errors.New("O nome informado contém caracteres especiais")
-// 	}
+// BemVindo constrói uma menssagem de boas vindas desejada para um nome passado por parâmetro.
+func BemVindo(nome string) (string, error) {
+	// verifica se a string é vazia
+	if s := strings.Trim(nome, " "); len(s) == 0 {
+		return "", errors.New("O nome informado está vazio")
+	}
+	// verifica se a string possui apenas números
+	if _, err := strconv.ParseFloat(nome, 64); err == nil {
+		return "", errors.New("O nome informado é um número")
+	}
+	// verifica se a string possui caracteres especiais
+	if strings.ContainsAny(nome, `,.|!@#$%&*+_-=[]{};:/?\\'"()`) {
+		return "", errors.New("O nome informado contém caracteres especiais")
+	}
 
-// 	return "Bem Vindo ao meetup da comunidade Golang CWB, " + nome + ".", nil
-// }
+	return "Bem Vindo ao meetup da comunidade Golang CWB, " + nome + ".", nil
+}
 
-// // DigaBemVindo imprime uma mensagem de bem vindo para um participante do meetup.
-// func DigaBemVindo(nome string) {
-// 	msgBoasVindas, err := BemVindo(nome)
-// 	if err != nil {
-// 		switch err.Error() {
-// 		case "O nome informado está vazio":
-// 			println("Não aceitamos pessoas anônimas!")
-// 		case "O nome informado é um número":
-// 			println("Te entendo, somos todos apenas números.")
-// 		case "O nome informado contém caracteres especiais":
-// 			println("Você ainda usa hotmail?")
-// 		}
-// 	}
-// 	println(msgBoasVindas)
-// }
+// DigaBemVindo imprime uma mensagem de bem vindo para um participante do meetup.
+func DigaBemVindo(w io.Writer, nome string) {
+	msgBoasVindas, err := BemVindo(nome)
+	if err != nil {
+		switch err.Error() {
+		case "O nome informado está vazio":
+			fmt.Fprintln(w, "Não aceitamos pessoas anônimas!")
+		case "O nome informado é um número":
+			fmt.Fprintln(w, "Te entendo, somos todos apenas números.")
+		case "O nome informado contém caracteres especiais":
+			fmt.Fprintln(w, "Você ainda usa hotmail?")
+		}
+	}
+	fmt.Fprintln(w, msgBoasVindas)
+}
 
 func main() {
 	nome := flag.String("nome", "folks", "Nome do participante do meetup")
