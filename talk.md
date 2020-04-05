@@ -45,14 +45,27 @@ func New(text string) error {
 Isso acaba se tornando uma dor de cabeça para quem está começando em go pois ao tentar realizar a comparação abaixo o resultado não é bem o esperado.
 
 ```golang
+package main
+
+import (
+	"errors"
+	"fmt"
+)
+
+func div(dividendo, divisor int) (int, error) {
+	if divisor == 0 {
+		return 0, errors.New("Erro: divisão por 0")
+	}
+	return dividendo / divisor, nil
+}
 
 func main() {
-erro1 := errors.New("Isto é um erro")
-erro2 := errors.New("Isto é um erro")
-fmt.Println(erro1 == erro2) //false
+	_, err1 := div(10, 0)
+	_, err2 := div(10, 0)
+	fmt.Println(err1 == err2)
+}
 }
 ```
-* https://play.golang.org/p/fqPUo8Rgglv3O
 
 ### Sentinelas
 
@@ -81,7 +94,6 @@ func main() {
 	}
 }
 ````
-* https://play.golang.org/p/Rt16cZiSJjD
 
 ### Tipos de erros Customizados
 
@@ -127,3 +139,4 @@ func DigaBemVindoCustom(w io.Writer, nome string) {
 
 ### fontes
 * [Error handling and Go - The go blog](https://blog.golang.org/error-handling-and-go)
+* [Nerdgirlz #30 - Go Go Go!](https://www.youtube.com/watch?v=ZAmESdN5alo)
