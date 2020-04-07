@@ -19,13 +19,13 @@ func (s StringVaziaError) Error() string {
 type StringNumericaError string
 
 func (s StringNumericaError) Error() string {
-	return "A string está " + string(s) + "contém apenas números."
+	return "A string " + string(s) + " contém apenas números."
 }
 
 type StringComCaracteresEspeciaisError string
 
 func (s StringComCaracteresEspeciaisError) Error() string {
-	return "A string está " + string(s) + "contém apenas números."
+	return "A string " + string(s) + " contém apenas caracteres especiais."
 }
 
 // BemVindo constrói uma menssagem de boas vindas desejada para um nome passado por parâmetro.
