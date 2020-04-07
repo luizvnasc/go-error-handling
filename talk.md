@@ -136,6 +136,12 @@ func DigaBemVindoCustom(w io.Writer, nome string) {
 	fmt.Fprintln(w, msgBoasVindas)
 }
 ```
+### Stack trace e 3th parties
+
+
+
+### Boas práticas
+referencia [Errors are values](https://blog.golang.org/errors-are-values)
 
 ### fontes
 * [Error handling and Go - The go blog](https://blog.golang.org/error-handling-and-go)
