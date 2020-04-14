@@ -1,5 +1,20 @@
 # Tratamento de erros em go antes da versão 1.13
 
+Tratamento de erros em Go é um tópico que gera muita discussão, geralmente reclamações sobre a quantidade o bloco
+
+```golang
+if err != nil {
+	return err
+}
+```
+aparece no código. Isso geralmente ocorre porque um programador novo em golang acredita que existe um padrão "bala de prata" para tratar erros ou apenas pensa que substituindo todo bloco `try-catch` pelo bloco acima resolverá seus problemas. Entretanto, como Rob Pike diz [neste artigo](https://blog.golang.org/errors-are-values), uma coisa fundamental que estes programadores esquecem é que:
+
+>Erros são valores!
+>
+>Valores podem ser programados, e como erros são valores, erros podem ser programados.
+
+Apesar de a comparação de um erro com `nil` ser o tratamento mais óbvio possível, existem diversas outras formas de ser tratar um erro, e isso é algo que eu quero mostrar neste artigo, mas antes vamos nos aprofundar um pouco mais para entender como funciona o tipo `error` em go.
+
 ## Built-in
 
 ```golang
@@ -138,7 +153,7 @@ func DigaBemVindoCustom(w io.Writer, nome string) {
 ```
 ### Stack trace e 3th parties
 
-
+* exemplo 4
 
 ### Boas práticas
 referencia [Errors are values](https://blog.golang.org/errors-are-values)
@@ -146,3 +161,4 @@ referencia [Errors are values](https://blog.golang.org/errors-are-values)
 ### fontes
 * [Error handling and Go - The go blog](https://blog.golang.org/error-handling-and-go)
 * [Nerdgirlz #30 - Go Go Go!](https://www.youtube.com/watch?v=ZAmESdN5alo)
+* [Errors are values](https://blog.golang.org/errors-are-values)
