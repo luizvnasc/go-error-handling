@@ -15,7 +15,7 @@ aparece no código. Isso geralmente ocorre porque um programador novo em golang 
 
 Apesar de a comparação de um erro com `nil` ser o tratamento mais óbvio possível, existem diversas outras formas de ser tratar um erro, e isso é algo que eu quero mostrar neste artigo, mas antes vamos nos aprofundar um pouco mais para entender como funciona o tipo `error` em go.
 
-## O tipo `error`
+### O tipo `error`
 
 O tipo `error` nada mais é do que a interface abaixo
 
@@ -97,6 +97,8 @@ Lógico que quanto mais perto da fronteira do `core` da sua aplicação, mais di
 
 ### Sentinelas
 
+Uma forma de verificar se o erro retornado é o mesmo que o esperado é através de sentinelas, que nada mais é que armazenar um erro em uma variável, ou constante em casos de personalizados como veremos depois, e utilizá-lo como meio de comparação como mostra o exemplo abaixo. 
+
 ```golang
 package main
 
@@ -116,12 +118,12 @@ func DigaOla(nome string) (string, error) {
 
 func main() {
 	if str, err := DigaOla(""); err == ErroNomeVazio {
-		fmt.Printf("Ocorreu um erro ao dizer Olá: %s", err)
+		//trata o erro aqui
 	}else{
 		fmt.Println(str)
 	}
 }
-````
+```
 
 ### Tipos de erros Customizados
 
