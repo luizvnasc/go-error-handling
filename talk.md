@@ -7,11 +7,12 @@ if err != nil {
 	return err
 }
 ```
+
 aparece no código. Isso geralmente ocorre porque um programador novo em golang acredita que existe um padrão "bala de prata" para tratar erros ou apenas pensa que substituindo todo bloco `try-catch` pelo bloco acima resolverá seus problemas. Entretanto, como Rob Pike diz [neste artigo](https://blog.golang.org/errors-are-values), uma coisa fundamental que estes programadores esquecem é que:
 
->Erros são valores!
+> Erros são valores!
 >
->Valores podem ser programados, e como erros são valores, erros podem ser programados.
+> Valores podem ser programados, e como erros são valores, erros podem ser programados.
 
 Apesar de a comparação de um erro com `nil` ser o tratamento mais óbvio possível, existem diversas outras formas de ser tratar um erro, e isso é algo que eu quero mostrar neste artigo, mas antes vamos nos aprofundar um pouco mais para entender como funciona o tipo `error` em go.
 
@@ -24,6 +25,7 @@ type error interface {
     Error() string
 }
 ```
+
 e, assim como outros tipos interno de go, é [pré-declarado](https://golang.org/ref/spec#Predeclared_identifiers) no [bloco universal](https://golang.org/ref/spec#Blocks), que engloba todo o código fonte de Go.
 
 ## Implemetação do tipo `error`
@@ -74,6 +76,7 @@ func main() {
 	fmt.Println(err1 == err2) //false
 }
 ```
+
 Isso ocorre porque, como pode ser visto na implementação da função `errors.New`, essas funções retornam um ponteiro da interface e error, e quando a comparação é feita, ela é feita em cima do endereço dos ponteiros e não em seus valores. Uma forma de realizar essa comparação seria da seguinte forma:
 
 ```golang
@@ -83,19 +86,22 @@ func main() {
 	fmt.Println(err1.Error() == err2.Error()) //true
 }
 ```
-No exemplo acima a comparação está sendo feita entre as mensagens dos erros e não em cima dos seus endereços. 
+
+No exemplo acima a comparação está sendo feita entre as mensagens dos erros e não em cima dos seus endereços.
 
 Dito isso, como poderiamos tratar melhor os nossos erros em go?
 
-<!-- 
+<!--
 
 NA: isso é válido?
 
-Primeiramente entendendo que, isso não apenas em go mas em qualquer linguagem, erros não são efeitos colaterais ou algo inesperado que ocorreu no seu programa, erros são parte da sua aplicação e devem ser tratados como tais. Generalizar um erro comparando ele com `nil` apenas pode ser uma grande dor de cabeça com o crescimento da sua aplicação.  
+Primeiramente entendendo que, isso não apenas em go mas em qualquer linguagem, erros não são efeitos colaterais ou algo inesperado que ocorreu no seu programa, erros são parte da sua aplicação e devem ser tratados como tais. Generalizar um erro comparando ele com `nil` apenas pode ser uma grande dor de cabeça com o crescimento da sua aplicação.
 
 Lógico que quanto mais perto da fronteira do `core` da sua aplicação, mais difícil é tratar um erro pois não sabemos quais erros são gerados em um package de terceiro. Mesmo assim, todo erro que atravessar esta fronteira adentrando no `core` da sua aplicação devem ser tratados como parte da regra de negócio da mesma. -->
 
 ### Sentinelas
+
+Para evitar o problema de comparaç~]ao de erros dito anteriormente, uma solução é a utilização de sentinelas que são apenas a declaração dos erros da aplicação em variáveis ou constantes. Tendo feito isso, a comparação não precisa mais ser entre o texto do `error`, através a função `Error()`, e pode ser feita através do enrereço dele, pois agora o erro irá se encontrar no mesmo bloco de memória sempre.
 
 ```golang
 package main
@@ -109,9 +115,9 @@ var ErroNomeVazio = errors.New("O nome informado está vazio.")
 
 func DigaOla(nome string) (string, error) {
 	if len(nome) == 0 {
-		return "", ErroNomeVazio 
+		return "", ErroNomeVazio
 	}
-	return "Olá " + nome, nil 
+	return "Olá " + nome, nil
 }
 
 func main() {
@@ -121,7 +127,9 @@ func main() {
 		fmt.Println(str)
 	}
 }
-````
+```
+
+Como pode ser visto no exemplo acima, a comparação do erro retornado não é mais com o texto do erro ou com `nil`, mas sim com a variável `ErroNomeVazio`.
 
 ### Tipos de erros Customizados
 
@@ -164,13 +172,13 @@ func DigaBemVindoCustom(w io.Writer, nome string) {
 	fmt.Fprintln(w, msgBoasVindas)
 }
 ```
+
 ### Stack trace e 3th parties
 
-* exemplo 4
-
-
+-   exemplo 4
 
 ### Referências bibliográficas
-* [Error handling and Go - The go blog](https://blog.golang.org/error-handling-and-go)
-* [Nerdgirlz #30 - Go Go Go!](https://www.youtube.com/watch?v=ZAmESdN5alo)
-* [Errors are values](https://blog.golang.org/errors-are-values)
+
+-   [Error handling and Go - The go blog](https://blog.golang.org/error-handling-and-go)
+-   [Nerdgirlz #30 - Go Go Go!](https://www.youtube.com/watch?v=ZAmESdN5alo)
+-   [Errors are values](https://blog.golang.org/errors-are-values)
