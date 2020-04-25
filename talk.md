@@ -28,7 +28,7 @@ type error interface {
 
 e, assim como outros tipos interno de go, é [pré-declarado](https://golang.org/ref/spec#Predeclared_identifiers) no [bloco universal](https://golang.org/ref/spec#Blocks), que engloba todo o código fonte de Go.
 
-## Implemetação do tipo `error`
+### Implemetação do tipo `error`
 
 A implementação mais trival de um tipo `error` é a implementação não exportada do pacote [`errors`](https://golang.org/src/errors/errors.go)
 
@@ -175,10 +175,11 @@ No exemplo acima não precisamos da utilização de sentinelas para verificar o 
 
 ### Stack trace e 3th parties
 
--   exemplo 4
+Até a versão o go 1.13, o pacote padrão `errors` nãop possuía nenhuma implementação de _stacktraces_. Por este motivo foram criados algums pacotes de terceiros para solucionar este problema como [palantir/stacktrace](https://github.com/palantir/stacktrace), [go-erros/errors](https://github.com/go-errors/errors) e [pkg/errors](https://github.com/pkg/errors).
 
 ### Referências bibliográficas
 
 -   [Error handling and Go - The go blog](https://blog.golang.org/error-handling-and-go)
 -   [Nerdgirlz #30 - Go Go Go!](https://www.youtube.com/watch?v=ZAmESdN5alo)
 -   [Errors are values](https://blog.golang.org/errors-are-values)
+-   [Error Handling in Go that Every Beginner should Know](https://medium.com/@hussachai/error-handling-in-go-a-quick-opinionated-guide-9199dd7c7f76)
