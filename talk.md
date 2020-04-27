@@ -136,6 +136,7 @@ Como pode ser visto no exemplo acima, a comparação do erro retornado não é m
 Caso seja necessário tratar os erros de forma específica, uma alteranitiva é a criação de erros personalidados implementando a interface `error` apresentada anteriormente. As vantagens desta abordagem é a criação de mensagens personalidadas e o tratamento  do erro através da comparação do seu tipo.
 
 ```golang
+// O exemplo completo você pode ver em https://github.com/luizvnasc/go-error-handling/tree/master/exemplos/3_erros_customizados
 type StringVaziaError string
 
 func (s StringVaziaError) Error() string {
@@ -153,6 +154,24 @@ type StringComCaracteresEspeciaisError string
 func (s StringComCaracteresEspeciaisError) Error() string {
 	return "A string está " + string(s) + "contém apenas números."
 }
+
+func BemVindoCustom(nome string) (string, error) {
+	// verifica se a string é vazia
+	if s := strings.Trim(nome, " "); len(s) == 0 {
+		return "", StringVaziaError(nome)
+	}
+	// verifica se a string possui apenas números
+	if _, err := strconv.ParseFloat(nome, 64); err == nil {
+		return "", StringNumericaError(nome)
+	}
+	// verifica se a string possui caracteres especiais
+	if strings.ContainsAny(nome, `,.|!@#$%&*+_-=[]{};:/?\\'"()`) {
+		return "", StringComCaracteresEspeciaisError(nome)
+	}
+
+	return "Bem Vindo ao meetup da comunidade Golang CWB, " + nome + ".", nil
+}
+
 
 // DigaBemVindoCustom imprime uma mensagem de bem vindo para um participante do meetup.
 func DigaBemVindoCustom(w io.Writer, nome string) {
@@ -175,7 +194,58 @@ No exemplo acima não precisamos da utilização de sentinelas para verificar o 
 
 ### Stack trace e 3th parties
 
-Até a versão o go 1.13, o pacote padrão `errors` nãop possuía nenhuma implementação de _stacktraces_. Por este motivo foram criados algums pacotes de terceiros para solucionar este problema como [palantir/stacktrace](https://github.com/palantir/stacktrace), [go-erros/errors](https://github.com/go-errors/errors) e [pkg/errors](https://github.com/pkg/errors).
+Até a versão o go 1.13, o pacote padrão `errors` nãop possuía nenhuma implementação de _stacktraces_. Por este motivo foram criados algums pacotes de terceiros para solucionar este problema como [palantir/stacktrace](https://github.com/palantir/stacktrace), [go-erros/errors](https://github.com/go-errors/errors) e [pkg/errors](https://github.com/pkg/errors), este último o mais popular entre eles com aproximadamente 5700 stars e 419 forks até a data de publicação deste artigo.
+
+Modificando um pouco nosso exemplo anterior para utilizar a biblioteca `pkg/errors` temos o seguinte código:
+
+```golang
+// O exemplo completo você pode visualizar em https://github.com/luizvnasc/go-error-handling/tree/master/exemplos/4_stacktrace
+import (
+	"flag"
+	"fmt"
+	"io"
+	"log"
+	"os"
+	"strconv"
+	"strings"
+
+	"github.com/pkg/errors"
+)
+
+// Os erros customizados a função que gera a mensagem de bem vindo não foram alterados.
+
+// DigaBemVindo imprime uma mensagem de bem vindo para um participante do meetup.
+func DigaBemVindo(w io.Writer, nome string) error {
+	msgBoasVindas, err := BemVindo(nome)
+	if err != nil {
+		return errors.Wrap(err, "Erro ao criar mensagem de boas vindas")
+	}
+	fmt.Fprintln(w, msgBoasVindas)
+	return nil
+}
+
+func main() {
+	nome := flag.String("nome", "folks", "Nome do participante do meetup")
+	flag.Parse()
+	err := DigaBemVindo(os.Stdout, *nome)
+
+	if err != nil {
+		log.Println(err)
+		switch errors.Cause(err).(type) {
+		case StringVaziaError:
+			fmt.Fprintln(os.Stdout, "Não aceitamos pessoas anônimas!")
+		case StringNumericaError:
+			fmt.Fprintln(os.Stdout, "Te entendo, somos todos apenas números.")
+		case StringComCaracteresEspeciaisError:
+			fmt.Fprintln(os.Stdout, "Você ainda usa hotmail?")
+		}
+	}
+}
+```
+
+Como pode ser visto no exemplo, utilizamos duas funções da bibliteca `pkg/errors`. A função `Wrap(err error, message string)` embrulha um erro em um novo erro para que seja criada a _stacktrace_, já a função `Cause(err error) error` percorre a pilha de forma recursiva até chegar a causa do problema, ou seja, aquele erro que embrulha nenhum outro erro.
+
+### A vida após o go 1.13
 
 ### Referências bibliográficas
 

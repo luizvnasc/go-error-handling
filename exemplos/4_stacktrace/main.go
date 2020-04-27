@@ -48,7 +48,7 @@ func BemVindo(nome string) (string, error) {
 	return "Bem Vindo ao meetup da comunidade Golang CWB, " + nome + ".", nil
 }
 
-// DigaBemVindoCustom imprime uma mensagem de bem vindo para um participante do meetup.
+// DigaBemVindo imprime uma mensagem de bem vindo para um participante do meetup.
 func DigaBemVindo(w io.Writer, nome string) error {
 	msgBoasVindas, err := BemVindo(nome)
 	if err != nil {
