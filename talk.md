@@ -16,7 +16,7 @@ aparece no código. Isso geralmente ocorre porque um programador novo em golang 
 
 Apesar de a comparação de um erro com `nil` ser o tratamento mais óbvio possível, existem diversas outras formas de ser tratar um erro, e isso é algo que eu quero mostrar neste artigo, mas antes vamos nos aprofundar um pouco mais para entender como funciona o tipo `error` em go.
 
-### O tipo `error`
+## O tipo `error`
 
 O tipo `error` nada mais é do que a interface abaixo
 
@@ -99,7 +99,7 @@ Primeiramente entendendo que, isso não apenas em go mas em qualquer linguagem, 
 
 Lógico que quanto mais perto da fronteira do `core` da sua aplicação, mais difícil é tratar um erro pois não sabemos quais erros são gerados em um package de terceiro. Mesmo assim, todo erro que atravessar esta fronteira adentrando no `core` da sua aplicação devem ser tratados como parte da regra de negócio da mesma. -->
 
-### Sentinelas
+## Sentinelas
 
 Para evitar o problema de comparaç~]ao de erros dito anteriormente, uma solução é a utilização de sentinelas que são apenas a declaração dos erros da aplicação em variáveis ou constantes. Tendo feito isso, a comparação não precisa mais ser entre o texto do `error`, através a função `Error()`, e pode ser feita através do endereço dele, pois agora o erro irá se encontrar no mesmo bloco de memória sempre.
 
@@ -131,7 +131,7 @@ func main() {
 
 Como pode ser visto no exemplo acima, a comparação do erro retornado não é mais com o texto do erro ou com `nil`, mas sim com a variável `ErroNomeVazio`.
 
-### Tipos de erros Customizados
+## Tipos de erros Customizados
 
 Caso seja necessário tratar os erros de forma específica, uma alteranitiva é a criação de erros personalidados implementando a interface `error` apresentada anteriormente. As vantagens desta abordagem é a criação de mensagens personalidadas e o tratamento  do erro através da comparação do seu tipo.
 
@@ -247,9 +247,192 @@ Como pode ser visto no exemplo, utilizamos duas funções da bibliteca `pkg/erro
 
 ### A vida após o go 1.13
 
+O lançamento do go 1.13 trouxe algumas funcionalidades para os pacotes padrões `errors` e `fmt` para tratar erros que embrulham outros erros. Dentre elas a convenção de que um erro que embrulha outro deve implementar a função Unwrap que retorna o erro embrulhado, conforme o exemplo abaixo:
+
+```golang
+type AppError struct {
+    msg string
+    Err error
+}
+
+func (a *AppError) Unwrap() error { return a.Err }
+
+```
+
+Como pode ser visto, diferentemente do pacote `pkg/errors`, nesta versão de go não foi implementada nenhuma função `Cause` que percorreria toda a _stacktrace_ até a raiz do erro.
+
+## Embrulhando erros com `%w`
+
+Como dito anteriormente, o pacote `fmt` ganhou uma nova funcionalidade para o embrulho de erros. Agora a função `fmt.Errorf` suporta a expressão `%w` que é responsável por embrulhar o erro informado dentro do erro criado. Modificando um pouco nosso exemplo de mensagem de boas vindas teremos:
+
+```golang
+package main
+
+import (
+	"flag"
+	"fmt"
+	"io"
+	"log"
+	"os"
+	"strconv"
+	"strings"
+	"errors"
+)
+
+type StringVaziaError string
+
+var(
+	errNomeVazio = errors.New("O nome informado está vazio")
+	errNomeNumerico = errors.New("O nome informado é um número")
+	errNomeCaracterEspecial = errors.New("O nome informado contém caracteres especiais")
+)
+
+// BemVindo constrói uma menssagem de boas vindas desejada para um nome passado por parâmetro.
+func BemVindo(nome string) (string, error) {
+	// verifica se a string é vazia
+	if s := strings.Trim(nome, " "); len(s) == 0 {
+		return "", errNomeVazio
+	}
+	// verifica se a string possui apenas números
+	if _, err := strconv.ParseFloat(nome, 64); err == nil {
+		return "", errNomeNumerico
+	}
+	// verifica se a string possui caracteres especiais
+	if strings.ContainsAny(nome, `,.|!@#$%&*+_-=[]{};:/?\\'"()`) {
+		return "", errNomeCaracterEspecial
+	}
+
+	return "Bem Vindo ao meetup da comunidade Golang CWB, " + nome + ".", nil
+}
+
+// DigaBemVindo imprime uma mensagem de bem vindo para um participante do meetup.
+func DigaBemVindo(w io.Writer, nome string) error {
+	msgBoasVindas, err := BemVindo(nome)
+	if err != nil {
+		return fmt.Errorf("Erro ao criar mensagem de boas vindas: %w", err)
+	}
+	fmt.Fprintln(w, msgBoasVindas)
+	return nil
+}
+
+func main() {
+	nome := flag.String("nome", "folks", "Nome do participante do meetup")
+	flag.Parse()
+	err := DigaBemVindo(os.Stdout, *nome)
+
+	if err != nil {
+		log.Println(err)
+		if errors.Is(err, errNomeVazio){
+			fmt.Fprintln(os.Stdout, "Não aceitamos pessoas anônimas!")
+		}
+		if errors.Is(err, errNomeNumerico){
+			fmt.Fprintln(os.Stdout, "Te entendo, somos todos apenas números.")
+		}
+		if errors.Is(err, errNomeCaracterEspecial){
+			fmt.Fprintln(os.Stdout, "Você ainda usa hotmail?")
+		}
+	}
+}
+
+```
+Veja que agora a função `DigaBemVindo` embrulha o erro retornado pela função `BemVindo` em um novo erro utilizando a função `fmt.Errorf`. Também criamos sentinelas em vez de utilizar implementações customizadas. Isso foi apenas para podr mostrar outra funcionalidade implementada nesta versão do go que é a comparação de erros com a função `Is` da biblioteca padrão `errors`. Ela basicamente verifica se um erro, ou os erros contidos nele, são o mesmo que o sentinela.
+
+Caso queira fazer uma comparação de tipo com dioferentes implementações de erro utilizamos a função `As`,também da biblioteca padrão `errors`. Vejamos como fica a implementação acima com utilizando a função `errors.As`.
+
+
+```golang
+package main
+
+import (
+	"errors"
+	"flag"
+	"fmt"
+	"io"
+	"log"
+	"os"
+	"strconv"
+	"strings"
+)
+
+type StringVaziaError string
+
+func (s StringVaziaError) Error() string {
+	return "A string está vazia."
+}
+
+type StringNumericaError string
+
+func (s StringNumericaError) Error() string {
+	return "A string " + string(s) + " contém apenas números."
+}
+
+type StringComCaracteresEspeciaisError string
+
+func (s StringComCaracteresEspeciaisError) Error() string {
+	return "A string " + string(s) + " contém apenas caracteres especiais."
+}
+
+var (
+	errNomeVazio            StringVaziaError
+	errNomeNumerico         StringNumericaError
+	errNomeCaracterEspecial StringComCaracteresEspeciaisError
+)
+
+// BemVindo constrói uma menssagem de boas vindas desejada para um nome passado por parâmetro.
+func BemVindo(nome string) (string, error) {
+	// verifica se a string é vazia
+	if s := strings.Trim(nome, " "); len(s) == 0 {
+		return "", StringVaziaError(nome)
+	}
+	// verifica se a string possui apenas números
+	if _, err := strconv.ParseFloat(nome, 64); err == nil {
+		return "", StringNumericaError(nome)
+	}
+	// verifica se a string possui caracteres especiais
+	if strings.ContainsAny(nome, `,.|!@#$%&*+_-=[]{};:/?\\'"()`) {
+		return "", StringComCaracteresEspeciaisError(nome)
+	}
+
+	return "Bem Vindo ao meetup da comunidade Golang CWB, " + nome + ".", nil
+}
+
+// DigaBemVindo imprime uma mensagem de bem vindo para um participante do meetup.
+func DigaBemVindo(w io.Writer, nome string) error {
+	msgBoasVindas, err := BemVindo(nome)
+	if err != nil {
+		return fmt.Errorf("Erro ao criar mensagem de boas vindas: %w", err)
+	}
+	fmt.Fprintln(w, msgBoasVindas)
+	return nil
+}
+
+func main() {
+	nome := flag.String("nome", "folks", "Nome do participante do meetup")
+	flag.Parse()
+	err := DigaBemVindo(os.Stdout, *nome)
+
+	if err != nil {
+		log.Println(err)
+		if errors.As(err, &errNomeVazio) {
+			fmt.Fprintln(os.Stdout, "Não aceitamos pessoas anônimas!")
+		}
+		if errors.As(err, &errNomeNumerico) {
+			fmt.Fprintln(os.Stdout, "Te entendo, somos todos apenas números.")
+		}
+		if errors.As(err, &errNomeCaracterEspecial) {
+			fmt.Fprintln(os.Stdout, "Você ainda usa hotmail?")
+		}
+	}
+}
+```
+
+Veja que, mesmo utilizando tipos diferentes de erros, a função `As` precisa de sentinelas para que haja a comparação, entretanto desta vez os sentinelas são tipos.
+
+
 ### Referências bibliográficas
 
 -   [Error handling and Go - The go blog](https://blog.golang.org/error-handling-and-go)
 -   [Nerdgirlz #30 - Go Go Go!](https://www.youtube.com/watch?v=ZAmESdN5alo)
 -   [Errors are values](https://blog.golang.org/errors-are-values)
 -   [Error Handling in Go that Every Beginner should Know](https://medium.com/@hussachai/error-handling-in-go-a-quick-opinionated-guide-9199dd7c7f76)
+-   [Working with Errors in Go 1.13](https://blog.golang.org/go1.13-errors)
