@@ -192,7 +192,7 @@ func DigaBemVindoCustom(w io.Writer, nome string) {
 
 No exemplo acima não precisamos da utilização de sentinelas para verificar o erro que foi retornado para realizarmos seu devido tratamento. Em vez disso comparamos o seu tipo com os tipos de erro da aplicação e, dependendo do erro retornado, é feita a impressão da mensagem de erro.
 
-### Stack trace e 3th parties
+## Stack trace e 3th parties
 
 Até a versão o go 1.13, o pacote padrão `errors` nãop possuía nenhuma implementação de _stacktraces_. Por este motivo foram criados algums pacotes de terceiros para solucionar este problema como [palantir/stacktrace](https://github.com/palantir/stacktrace), [go-erros/errors](https://github.com/go-errors/errors) e [pkg/errors](https://github.com/pkg/errors), este último o mais popular entre eles com aproximadamente 5700 stars e 419 forks até a data de publicação deste artigo.
 
@@ -245,7 +245,7 @@ func main() {
 
 Como pode ser visto no exemplo, utilizamos duas funções da bibliteca `pkg/errors`. A função `Wrap(err error, message string)` embrulha um erro em um novo erro para que seja criada a _stacktrace_, já a função `Cause(err error) error` percorre a pilha de forma recursiva até chegar a causa do problema, ou seja, aquele erro que embrulha nenhum outro erro.
 
-### A vida após o go 1.13
+## A vida após o go 1.13
 
 O lançamento do go 1.13 trouxe algumas funcionalidades para os pacotes padrões `errors` e `fmt` para tratar erros que embrulham outros erros. Dentre elas a convenção de que um erro que embrulha outro deve implementar a função Unwrap que retorna o erro embrulhado, conforme o exemplo abaixo:
 
@@ -261,7 +261,7 @@ func (a *AppError) Unwrap() error { return a.Err }
 
 Como pode ser visto, diferentemente do pacote `pkg/errors`, nesta versão de go não foi implementada nenhuma função `Cause` que percorreria toda a _stacktrace_ até a raiz do erro.
 
-## Embrulhando erros com `%w`
+### Embrulhando erros com `%w`
 
 Como dito anteriormente, o pacote `fmt` ganhou uma nova funcionalidade para o embrulho de erros. Agora a função `fmt.Errorf` suporta a expressão `%w` que é responsável por embrulhar o erro informado dentro do erro criado. Modificando um pouco nosso exemplo de mensagem de boas vindas teremos:
 
@@ -429,10 +429,78 @@ func main() {
 Veja que, mesmo utilizando tipos diferentes de erros, a função `As` precisa de sentinelas para que haja a comparação, entretanto desta vez os sentinelas são tipos.
 
 
-### Referências bibliográficas
+## `defer`, `panic` e `recover`
+
+Outra forma de tratar erros em go é a utilização da declaração `defer` e das funções panic e recover.
+
+a declaração `defer` empilha uma função na pilha de execução para ser executada ao fim da função na qual ela foi chamada. Essa declaração é extremamente quando se precisa fazer alguma limpeza no final da execução de alguma função.
+
+```golang
+func CopyFile(dstName, srcName string) (written int64, err error) {
+    src, err := os.Open(srcName)
+    if err != nil {
+        return
+    }
+    defer src.Close()
+
+    dst, err := os.Create(dstName)
+    if err != nil {
+        return
+    }
+    defer dst.Close()
+
+    return io.Copy(dst, src)
+}
+```
+A função acima faz a copia de um arquivo. Nela é possível ver que a declaração `defer` é utilizada para fechar os arquivos de origem e destino. No caso do arquivo de origem, a declaração `defer`garante que ele seja fechado mesmo que ocorra um erro durante a cópia. Outra vantagem da declaração `defer` é na organização do código, pedir para fechar um arquivo que foi recém aberto é mais legível que lembrar de fechar ele no fim da função.
+
+A função `panic` para todo o fluxo de execução do go e entra em "pânico". Isso quer dizer que a se uma função **F** entra em pânico, ela irá para o restante da sua execução, a função declarada com `defer` será executada normalmente, e irá retornar para quem à chamou. Isso ocorrerá até que todas as funções chamadas sejam retornadas e o programa quebre. 
+
+A função `recover` recupera o programa em pânico e retorna a execução normal a partir dela. Ela deve ser utilizada dentro de uma declaração `defer`, pois gantante que será executada em um programa em pânico.
+
+```golang
+package main
+
+import "fmt"
+
+func main() {
+    f()
+    fmt.Println("Returned normally from f.")
+}
+
+func f() {
+    defer func() {
+        if r := recover(); r != nil {
+            fmt.Println("Recovered in f", r)
+        }
+    }()
+    fmt.Println("Calling g.")
+    g(0)
+    fmt.Println("Returned normally from g.")
+}
+
+func g(i int) {
+    if i > 3 {
+        fmt.Println("Panicking!")
+        panic(fmt.Sprintf("%v", i))
+    }
+    defer fmt.Println("Defer in g", i)
+    fmt.Println("Printing in g", i)
+    g(i + 1)
+}
+```
+
+No exemplo acima, a função `f()` chama a função `g(0)` que é executada recursivamente até o valor de i ser igual a 3. Após isso ela entra em pânico e retorna até ser recuperada na função `f()` que pega o valor recuperado e imprime no terminal.
+
+## Conclusão
+
+ Considerar que o tratamento de erro em go é simplório é uma interpretação erronea pois, pesar da linguagem go não possuir exceções como outras linguagem, ela possui diversas formas de tratamento de erros que da um leque de possibilidades para o desenvolvedor. Analisar como os erros da sua aplicação devem ser tratados é um desafio e tanto e eu espero que este artigo tenha ajudado quem busca a melhor maneira de ultrapassá-lo.
+
+### Fontes
 
 -   [Error handling and Go - The go blog](https://blog.golang.org/error-handling-and-go)
 -   [Nerdgirlz #30 - Go Go Go!](https://www.youtube.com/watch?v=ZAmESdN5alo)
 -   [Errors are values](https://blog.golang.org/errors-are-values)
 -   [Error Handling in Go that Every Beginner should Know](https://medium.com/@hussachai/error-handling-in-go-a-quick-opinionated-guide-9199dd7c7f76)
 -   [Working with Errors in Go 1.13](https://blog.golang.org/go1.13-errors)
+-   [defer, panic and recover](https://blog.golang.org/defer-panic-and-recover)
