@@ -1,6 +1,7 @@
 # Tratamento de erros em go antes da versão 1.13
+Tratamento de erros é uma parte crucial de toda aplicação, seja ela grande ou pequena, e cada linguagem trata seus erros de formas diferentes. Em `C` por exemplo, é bem comum tratar um erro retornando um código de erro em uma função, ja nas linguagens mais atuais como `Java` e `C#` os erros são chamados de exeções e são tratadas com blocos `try...catch` assim como `C++` e diversas outras linguagens de alto nível (`python` tem um bloco semelhante mas que se chama `try...except`). 
 
-Tratamento de erros em Go é um tópico que gera muita discussão, geralmente reclamações sobre a quantidade o bloco
+Já `Go`, na tentativa de deixar a vida do programador mais simples, se assemelha muito ao `C` pois se aproveita da vantagem de se poder retornar mais de um valor em uma função e o conjunto `defer, panic, recover`, como veremos mais tarde, tem um fluxo muito parecido com o do block `try...catch`. Mesmo assim, tratamento de erros em Go é um tópico que gera muita discussão, geralmente reclamações sobre a quantidade o bloco
 
 ```golang
 if err != nil {
